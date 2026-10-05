@@ -38,7 +38,9 @@ ESR with `xpinstall.signatures.required=false`, or sign it with `web-ext sign`.
 
 Big sites need nudging. `OWR_SITES` in `extension/css.js` holds per-site `skip` selectors (leave the site's own colors alone, e.g. video players) and extra `css`. X and YouTube are in there as examples: both draw touch targets as filled boxes, so their icon buttons are made transparent.
 
-## Development
+## Fork it, bend it
+
+Want it to look different or fix your favorite site? It has no build step, so that is mostly editing `extension/css.js` and reloading. [CONTRIBUTING.md](CONTRIBUTING.md) covers the layout, the dev loop, how to add a site tweak, and how to give your fork its own extension ID. PRs welcome.
 
 `docs/header.html` renders the header image on a canvas; open it in a browser or screenshot the `#c` element at 2x.
 
