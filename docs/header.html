@@ -52,35 +52,31 @@ function photo(x, y, w, h, hue) {
   g.restore();
 }
 
-function site({ x, y, w, h, rot, p, label, shadow = 0.5 }) {
+function site({ x, y, w, h, rot, p, scale = 1, shadow = 0.5 }) {
   g.save();
-  g.translate(x + w / 2, y + h / 2); g.rotate(rot); g.translate(-w / 2, -h / 2);
+  g.translate(x + (w * scale) / 2, y + (h * scale) / 2); g.rotate(rot); g.scale(scale, scale); g.translate(-w / 2, -h / 2);
   g.shadowColor = `rgba(0,0,0,${shadow})`; g.shadowBlur = 50; g.shadowOffsetY = 24;
   rr(0, 0, w, h, 16); fill(p.bg);
   g.shadowColor = "transparent";
   rr(0.5, 0.5, w - 1, h - 1, 16); g.strokeStyle = p.line; g.lineWidth = 1.5; g.stroke();
   g.save(); rr(0, 0, w, h, 16); g.clip();
 
-  // title bar
   g.fillStyle = p.alt; g.fillRect(0, 0, w, 42);
-  [["#ff5f57"], ["#febc2e"], ["#28c840"]].forEach(([col], i) => { g.beginPath(); g.arc(22 + i * 18, 21, 5.5, 0, 7); fill(col); });
+  ["#ff5f57", "#febc2e", "#28c840"].forEach((col, i) => { g.beginPath(); g.arc(22 + i * 18, 21, 5.5, 0, 7); fill(col); });
   rr(88, 9, w - 112, 24, 12); fill(p.bg);
   g.fillStyle = p.dim; g.font = `12px ${MONO}`; g.textBaseline = "middle"; g.fillText("example.com", 106, 22);
 
-  // nav
   g.beginPath(); g.arc(30, 72, 10, 0, 7); fill(p.accent);
-  [60, 44, 52].forEach((bw, i) => { rr(w - 36 - [160, 98, 40][i] - 0, 66, bw, 12, 6); fill(p.dim); });
+  [60, 44, 52].forEach((bw, i) => { rr(w - 36 - [160, 98, 40][i], 66, bw, 12, 6); fill(p.dim); });
   g.fillStyle = p.line; g.fillRect(0, 98, w, 1.5);
 
-  // hero
   g.fillStyle = p.fg; g.font = `800 30px ${SANS}`; g.textBaseline = "alphabetic";
   g.fillText("Hello, web.", 26, 150);
   [w - 120, w - 190].forEach((bw, i) => { rr(26, 166 + i * 18, bw, 9, 4.5); fill(p.dim); });
   rr(26, 214, 108, 34, 17); fill(p.accent);
   g.fillStyle = p.bg; g.font = `700 14px ${SANS}`; g.fillText("Get started", 45, 236);
-  g.fillStyle = p.accent; g.font = `600 14px ${SANS}`; g.fillText("Read the docs →", 152, 236);
+  g.fillStyle = p.accent; g.font = `600 14px ${SANS}`; g.fillText("Read the docs \u2192", 152, 236);
 
-  // cards
   const cw = (w - 26 * 2 - 14) / 2;
   [[0, 40], [1, 205]].forEach(([i, hue]) => {
     const cx = 26 + i * (cw + 14), cy = 272;
@@ -91,46 +87,54 @@ function site({ x, y, w, h, rot, p, label, shadow = 0.5 }) {
     rr(cx + 12, cy + 128, cw * 0.5, 8, 4); fill(p.dim);
   });
   g.restore();
+  g.restore();
+}
 
-  // tag
-  g.font = `600 13px ${MONO}`;
-  const tw = g.measureText(label).width + 26;
-  rr(w - tw - 14, h + 14, tw, 28, 14); fill("rgba(255,255,255,0.08)");
-  g.fillStyle = "#cdd6f4"; g.textBaseline = "middle"; g.fillText(label, w - tw - 1, h + 29);
+// Big sticker label, deliberately loud.
+function sticker(text, x, y, rot, bg, fg) {
+  g.save(); g.translate(x, y); g.rotate(rot);
+  g.font = `900 40px ${SANS}`;
+  const w = g.measureText(text).width + 44;
+  g.shadowColor = "rgba(0,0,0,0.5)"; g.shadowBlur = 18; g.shadowOffsetY = 8;
+  rr(0, -34, w, 62, 14); fill(bg);
+  g.shadowColor = "transparent";
+  g.fillStyle = fg; g.textBaseline = "alphabetic"; g.fillText(text, 22, 11);
+  g.restore();
+}
+
+// Chunky red arrow with a white keyline so it pops on any background.
+function arrow(cx, cy, len, thick, rot) {
+  g.save(); g.translate(cx, cy); g.rotate(rot);
+  const h = len / 2, t = thick / 2, head = thick * 1.55, neck = len * 0.08;
+  g.beginPath();
+  g.moveTo(-h, -t); g.lineTo(h - head - neck, -t); g.lineTo(h - head - neck, -head);
+  g.lineTo(h, 0); g.lineTo(h - head - neck, head); g.lineTo(h - head - neck, t); g.lineTo(-h, t); g.closePath();
+  g.shadowColor = "rgba(0,0,0,0.55)"; g.shadowBlur = 30; g.shadowOffsetY = 14;
+  g.lineJoin = "round"; g.lineWidth = 18; g.strokeStyle = "#fff"; g.stroke();
+  g.shadowColor = "transparent";
+  const gr = g.createLinearGradient(-h, 0, h, 0);
+  gr.addColorStop(0, "#ff4d4d"); gr.addColorStop(1, "#e5173f");
+  g.fillStyle = gr; g.fill();
   g.restore();
 }
 
 function title() {
-  g.textBaseline = "alphabetic";
-  // eyebrow
-  g.font = `600 15px ${MONO}`; g.fillStyle = "#89b4fa";
-  g.fillText("▸ colors.toml  →  every website", 80, 150);
-  // title
-  g.font = `800 92px ${SANS}`;
-  const t = g.createLinearGradient(80, 200, 700, 330);
-  t.addColorStop(0, "#cdd6f4"); t.addColorStop(1, "#89b4fa");
-  g.fillStyle = "#cdd6f4"; g.fillText("Omarchy", 76, 245);
-  g.fillStyle = t; g.fillText("Web Retheme", 76, 335);
-  // tagline
-  g.font = `400 26px ${SANS}`; g.fillStyle = "#a6adc8";
-  g.fillText("Your browser, in your terminal’s colors.", 80, 395);
-  g.font = `400 19px ${SANS}`; g.fillStyle = "#7f849c";
-  g.fillText("Switch Omarchy themes — every open tab follows, live.", 80, 432);
-  // palette dots
-  THEMES.catppuccin.dots.forEach((col, i) => { g.beginPath(); g.arc(92 + i * 34, 488, 11, 0, 7); fill(col); });
-  // badges
-  [["Chromium", 80], ["Firefox", 190], ["MV3", 286]].forEach(([s, x]) => {
-    g.font = `600 14px ${MONO}`; const w = g.measureText(s).width + 28;
-    rr(x, 532, w, 30, 15); g.strokeStyle = "rgba(205,214,244,0.25)"; g.lineWidth = 1.5; g.stroke();
-    g.fillStyle = "#bac2de"; g.textBaseline = "middle"; g.fillText(s, x + 14, 547); g.textBaseline = "alphabetic";
-  });
+  g.textAlign = "center"; g.textBaseline = "alphabetic";
+  g.font = `900 54px ${SANS}`; g.fillStyle = "#ffffff";
+  g.fillText("Omarchy Web Retheme", W / 2, 62);
+  g.font = `500 23px ${SANS}`; g.fillStyle = "#a6adc8";
+  g.fillText("Make every website match your terminal theme.", W / 2, 98);
+  g.textAlign = "left";
 }
 
 function draw() {
   background();
-  site({ x: 800, y: 70, w: 360, h: 430, rot: -0.07, p: THEMES.light, label: "before", shadow: 0.35 });
-  site({ x: 985, y: 78, w: 360, h: 430, rot: 0.02, p: THEMES.kanagawa, label: "kanagawa" });
-  site({ x: 1165, y: 62, w: 370, h: 440, rot: 0.075, p: THEMES.catppuccin, label: "catppuccin" });
+  const S = 1.14, ww = 380, wh = 340;
+  site({ x: 100, y: 172, w: ww, h: wh, scale: S, rot: -0.03, p: THEMES.light, shadow: 0.35 });
+  site({ x: 1600 - 100 - ww * S, y: 172, w: ww, h: wh, scale: S, rot: 0.03, p: THEMES.catppuccin });
+  arrow(800, 350, 300, 78, -0.06);
+  sticker("BEFORE", 64, 172, -0.06, "#ffffff", "#c5221f");
+  sticker("AFTER", 1600 - 64 - 190, 172, 0.06, "#a6e3a1", "#11111b");
   title();
 }
 document.fonts.ready.then(draw);
