@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  :root { --bg:#1e1e2e; --fg:#cdd6f4; --alt:#313244; --accent:#89b4fa; --muted:#6c7086 }
+  body { margin:0; padding:12px; width:240px; background:var(--bg); color:var(--fg); font:13px/1.4 system-ui, sans-serif }
+  h1 { font-size:13px; margin:0 0 8px; color:var(--accent) }
+  label { display:flex; justify-content:space-between; align-items:center; margin:8px 0 }
+  select { background:var(--alt); color:var(--fg); border:1px solid var(--muted); border-radius:4px; padding:2px 4px }
+  .sw { display:flex; gap:3px; margin:8px 0 }
+  .sw i { flex:1; height:14px; border-radius:3px }
+  .err { color:#f38ba8; font-size:12px; word-break:break-word }
+  small { color:var(--muted) }
+</style>
+<h1 id="name">Omarchy Web Retheme</h1>
+<div class="sw" id="sw"></div>
+<label>Enabled <input type="checkbox" id="enabled"></label>
+<label>Style
+  <select id="mode"><option value="full">Full reset</option><option value="soft">Soft</option></select>
+</label>
+<label><span>Skip <b id="host"></b></span> <input type="checkbox" id="skip"></label>
+<button id="grant" hidden>Grant access to all sites</button>
+<div class="err" id="err"></div>
+<script src="popup.js"></script>

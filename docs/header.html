@@ -1,0 +1,137 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>omarchy-web-retheme header</title>
+<style>html,body{margin:0;background:#11111b}canvas{display:block}</style>
+<canvas id="c" width="1600" height="600"></canvas>
+<script>
+// Renders the README header. Open in a browser, or see docs/ for the PNG.
+const c = document.getElementById("c");
+const g = c.getContext("2d");
+const W = c.width, H = c.height;
+const SANS = '"Inter","Noto Sans","DejaVu Sans",system-ui,sans-serif';
+const MONO = '"CaskaydiaMono Nerd Font Mono","JetBrains Mono","Noto Sans Mono",monospace';
+
+// Real Omarchy theme palettes (from /usr/share/omarchy/themes/*/colors.toml).
+const THEMES = {
+  catppuccin: { bg: "#1e1e2e", alt: "#313244", line: "#45475a", fg: "#cdd6f4", dim: "#7f849c", accent: "#89b4fa",
+    dots: ["#f38ba8", "#f6b6ab", "#f9e2af", "#a6e3a1", "#94e2d5", "#89b4fa", "#f5c2e7"] },
+  kanagawa: { bg: "#1f1f28", alt: "#223249", line: "#363646", fg: "#dcd7ba", dim: "#727169", accent: "#7e9cd8" },
+  gruvbox: { bg: "#282828", alt: "#3c3836", line: "#504945", fg: "#d4be98", dim: "#928374", accent: "#d8a657" },
+  light: { bg: "#ffffff", alt: "#f1f3f4", line: "#dadce0", fg: "#202124", dim: "#80868b", accent: "#1a73e8" },
+};
+
+const rr = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
+const fill = (col) => { g.fillStyle = col; g.fill(); };
+
+function background() {
+  const bg = g.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, "#0d0d16");
+  bg.addColorStop(1, "#1a1a2b");
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  // dot grid
+  g.fillStyle = "rgba(205,214,244,0.06)";
+  for (let x = 24; x < W; x += 32) for (let y = 24; y < H; y += 32) g.fillRect(x, y, 2, 2);
+  // glows behind the windows
+  for (const [x, y, r, col] of [[1150, 160, 420, "rgba(137,180,250,0.20)"], [1350, 520, 360, "rgba(245,194,231,0.14)"], [900, 480, 300, "rgba(166,227,161,0.08)"]]) {
+    const rg = g.createRadialGradient(x, y, 0, x, y, r);
+    rg.addColorStop(0, col); rg.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = rg; g.fillRect(0, 0, W, H);
+  }
+}
+
+// Media keeps its own colors in every theme, which is the point.
+function photo(x, y, w, h, hue) {
+  g.save(); rr(x, y, w, h, 8); g.clip();
+  const l = g.createLinearGradient(x, y, x + w, y + h);
+  l.addColorStop(0, `hsl(${hue},85%,62%)`); l.addColorStop(1, `hsl(${hue + 55},80%,45%)`);
+  g.fillStyle = l; g.fillRect(x, y, w, h);
+  g.fillStyle = `hsla(${hue + 30},90%,80%,0.55)`;
+  g.beginPath(); g.arc(x + w * 0.72, y + h * 0.3, h * 0.22, 0, 7); g.fill();
+  g.fillStyle = `hsla(${hue + 200},60%,25%,0.55)`;
+  g.beginPath(); g.moveTo(x, y + h); g.lineTo(x + w * 0.35, y + h * 0.5); g.lineTo(x + w * 0.62, y + h * 0.8); g.lineTo(x + w * 0.82, y + h * 0.58); g.lineTo(x + w, y + h); g.fill();
+  g.restore();
+}
+
+function site({ x, y, w, h, rot, p, label, shadow = 0.5 }) {
+  g.save();
+  g.translate(x + w / 2, y + h / 2); g.rotate(rot); g.translate(-w / 2, -h / 2);
+  g.shadowColor = `rgba(0,0,0,${shadow})`; g.shadowBlur = 50; g.shadowOffsetY = 24;
+  rr(0, 0, w, h, 16); fill(p.bg);
+  g.shadowColor = "transparent";
+  rr(0.5, 0.5, w - 1, h - 1, 16); g.strokeStyle = p.line; g.lineWidth = 1.5; g.stroke();
+  g.save(); rr(0, 0, w, h, 16); g.clip();
+
+  // title bar
+  g.fillStyle = p.alt; g.fillRect(0, 0, w, 42);
+  [["#ff5f57"], ["#febc2e"], ["#28c840"]].forEach(([col], i) => { g.beginPath(); g.arc(22 + i * 18, 21, 5.5, 0, 7); fill(col); });
+  rr(88, 9, w - 112, 24, 12); fill(p.bg);
+  g.fillStyle = p.dim; g.font = `12px ${MONO}`; g.textBaseline = "middle"; g.fillText("example.com", 106, 22);
+
+  // nav
+  g.beginPath(); g.arc(30, 72, 10, 0, 7); fill(p.accent);
+  [60, 44, 52].forEach((bw, i) => { rr(w - 36 - [160, 98, 40][i] - 0, 66, bw, 12, 6); fill(p.dim); });
+  g.fillStyle = p.line; g.fillRect(0, 98, w, 1.5);
+
+  // hero
+  g.fillStyle = p.fg; g.font = `800 30px ${SANS}`; g.textBaseline = "alphabetic";
+  g.fillText("Hello, web.", 26, 150);
+  [w - 120, w - 190].forEach((bw, i) => { rr(26, 166 + i * 18, bw, 9, 4.5); fill(p.dim); });
+  rr(26, 214, 108, 34, 17); fill(p.accent);
+  g.fillStyle = p.bg; g.font = `700 14px ${SANS}`; g.fillText("Get started", 45, 236);
+  g.fillStyle = p.accent; g.font = `600 14px ${SANS}`; g.fillText("Read the docs →", 152, 236);
+
+  // cards
+  const cw = (w - 26 * 2 - 14) / 2;
+  [[0, 40], [1, 205]].forEach(([i, hue]) => {
+    const cx = 26 + i * (cw + 14), cy = 272;
+    rr(cx, cy, cw, h - cy - 22, 12); fill(p.alt);
+    rr(cx + 0.5, cy + 0.5, cw - 1, h - cy - 23, 12); g.strokeStyle = p.line; g.lineWidth = 1; g.stroke();
+    photo(cx + 10, cy + 10, cw - 20, 86, hue);
+    rr(cx + 12, cy + 108, cw * 0.7, 10, 5); fill(p.fg);
+    rr(cx + 12, cy + 128, cw * 0.5, 8, 4); fill(p.dim);
+  });
+  g.restore();
+
+  // tag
+  g.font = `600 13px ${MONO}`;
+  const tw = g.measureText(label).width + 26;
+  rr(w - tw - 14, h + 14, tw, 28, 14); fill("rgba(255,255,255,0.08)");
+  g.fillStyle = "#cdd6f4"; g.textBaseline = "middle"; g.fillText(label, w - tw - 1, h + 29);
+  g.restore();
+}
+
+function title() {
+  g.textBaseline = "alphabetic";
+  // eyebrow
+  g.font = `600 15px ${MONO}`; g.fillStyle = "#89b4fa";
+  g.fillText("▸ colors.toml  →  every website", 80, 150);
+  // title
+  g.font = `800 92px ${SANS}`;
+  const t = g.createLinearGradient(80, 200, 700, 330);
+  t.addColorStop(0, "#cdd6f4"); t.addColorStop(1, "#89b4fa");
+  g.fillStyle = "#cdd6f4"; g.fillText("Omarchy", 76, 245);
+  g.fillStyle = t; g.fillText("Web Retheme", 76, 335);
+  // tagline
+  g.font = `400 26px ${SANS}`; g.fillStyle = "#a6adc8";
+  g.fillText("Your browser, in your terminal’s colors.", 80, 395);
+  g.font = `400 19px ${SANS}`; g.fillStyle = "#7f849c";
+  g.fillText("Switch Omarchy themes — every open tab follows, live.", 80, 432);
+  // palette dots
+  THEMES.catppuccin.dots.forEach((col, i) => { g.beginPath(); g.arc(92 + i * 34, 488, 11, 0, 7); fill(col); });
+  // badges
+  [["Chromium", 80], ["Firefox", 190], ["MV3", 286]].forEach(([s, x]) => {
+    g.font = `600 14px ${MONO}`; const w = g.measureText(s).width + 28;
+    rr(x, 532, w, 30, 15); g.strokeStyle = "rgba(205,214,244,0.25)"; g.lineWidth = 1.5; g.stroke();
+    g.fillStyle = "#bac2de"; g.textBaseline = "middle"; g.fillText(s, x + 14, 547); g.textBaseline = "alphabetic";
+  });
+}
+
+function draw() {
+  background();
+  site({ x: 800, y: 70, w: 360, h: 430, rot: -0.07, p: THEMES.light, label: "before", shadow: 0.35 });
+  site({ x: 985, y: 78, w: 360, h: 430, rot: 0.02, p: THEMES.kanagawa, label: "kanagawa" });
+  site({ x: 1165, y: 62, w: 370, h: 440, rot: 0.075, p: THEMES.catppuccin, label: "catppuccin" });
+  title();
+}
+document.fonts.ready.then(draw);
+</script>

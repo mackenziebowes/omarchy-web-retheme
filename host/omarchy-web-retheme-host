@@ -1,0 +1,85 @@
+#!/usr/bin/python3
+"""Native messaging host: streams the current Omarchy theme to the browser extension.
+
+Protocol (Chromium native messaging): 4-byte little-endian length + UTF-8 JSON.
+Sends {"type":"theme","name":str,"colors":{...}} on connect and whenever the theme changes.
+Understands {"type":"refresh"} from the extension to force a resend.
+"""
+import json
+import os
+import struct
+import sys
+import threading
+import time
+import tomllib
+
+STATE = os.path.join(
+    os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state")),
+    "omarchy",
+    "current",
+)
+COLORS = os.path.join(STATE, "theme", "colors.toml")
+NAME = os.path.join(STATE, "theme.name")
+
+send_lock = threading.Lock()
+
+
+def send(msg):
+    data = json.dumps(msg).encode()
+    with send_lock:
+        sys.stdout.buffer.write(struct.pack("<I", len(data)) + data)
+        sys.stdout.buffer.flush()
+
+
+def read_theme():
+    with open(COLORS, "rb") as f:
+        colors = tomllib.load(f)
+    try:
+        with open(NAME) as f:
+            name = f.read().strip()
+    except OSError:
+        name = ""
+    return {"type": "theme", "name": name, "colors": colors}
+
+
+def fingerprint():
+    # Theme switches replace the whole directory, so check both files.
+    try:
+        return (os.stat(COLORS).st_mtime_ns, os.stat(NAME).st_mtime_ns, os.stat(COLORS).st_ino)
+    except OSError:
+        return None
+
+
+def push():
+    try:
+        send(read_theme())
+    except Exception as e:  # keep the host alive; the extension keeps its cached theme
+        send({"type": "error", "message": str(e)})
+
+
+def watcher():
+    last = None
+    while True:
+        fp = fingerprint()
+        if fp != last:
+            last = fp
+            if fp is not None:
+                time.sleep(0.15)  # let omarchy finish writing the theme dir
+                push()
+        time.sleep(0.5)
+
+
+def main():
+    threading.Thread(target=watcher, daemon=True).start()
+    while True:
+        header = sys.stdin.buffer.read(4)
+        if len(header) < 4:
+            return  # browser closed the port
+        (n,) = struct.unpack("<I", header)
+        msg = json.loads(sys.stdin.buffer.read(n) or b"{}")
+        if msg.get("type") == "refresh":
+            push()
+
+
+if __name__ == "__main__":
+    main()

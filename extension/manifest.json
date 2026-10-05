@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "Omarchy Web Retheme",
+  "version": "0.1.0",
+  "description": "Restyles websites with your current Omarchy theme.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsJg6Rm1dqK7o613vholFrsBJicbsAmD+lX70zEW9oksCRPtznL4tjB7AJulnATDzcITH/tCKVToe+AiLR7BMzoOgeJ547DnF3+1nm1x7quNbbcB3lUqIibqOyXnuD0iAEseVroVriGmScbI4wTisblOYm79iIHaoUwkwB+z5Cp86PvZExnmE2G0fCO7Scxau5QnHCAp281xhgtJ4+8fhw3u8geCgOxuK0VCsrvbEF2lnbkVIYrJJiHEd/YukY3unkc5A6DrchcgM3hngHsQb8rF6C0hayBRsKZ/MQMYeeVp+GVYYaubbxHPf+XmmR+xGbHitz3XnJH9oM1FuZ1lAmQIDAQAB",
+  "permissions": [
+    "nativeMessaging",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "css.js",
+        "paint.js",
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Omarchy Web Retheme"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "omarchy-web-retheme@mackenziebowes.com",
+      "strict_min_version": "121.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  }
+}
