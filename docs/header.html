@@ -17,6 +17,8 @@ const THEMES = {
     dots: ["#f38ba8", "#f6b6ab", "#f9e2af", "#a6e3a1", "#94e2d5", "#89b4fa", "#f5c2e7"] },
   kanagawa: { bg: "#1f1f28", alt: "#223249", line: "#363646", fg: "#dcd7ba", dim: "#727169", accent: "#7e9cd8" },
   gruvbox: { bg: "#282828", alt: "#3c3836", line: "#504945", fg: "#d4be98", dim: "#928374", accent: "#d8a657" },
+  everforest: { bg: "#2d353b", alt: "#343f44", line: "#3d484d", fg: "#d3c6aa", dim: "#859289", accent: "#7fbbb3" },
+  latte: { bg: "#eff1f5", alt: "#dce0e8", line: "#ccd0da", fg: "#4c4f69", dim: "#9ca0b0", accent: "#1e66f5" },
   light: { bg: "#ffffff", alt: "#f1f3f4", line: "#dadce0", fg: "#202124", dim: "#80868b", accent: "#1a73e8" },
 };
 
@@ -91,30 +93,36 @@ function site({ x, y, w, h, rot, p, scale = 1, shadow = 0.5 }) {
 }
 
 // Big sticker label, deliberately loud.
-function sticker(text, x, y, rot, bg, fg) {
+function sticker(text, x, y, rot, bg, fg, size = 40) {
   g.save(); g.translate(x, y); g.rotate(rot);
-  g.font = `900 40px ${SANS}`;
-  const w = g.measureText(text).width + 44;
+  g.font = `900 ${size}px ${SANS}`;
+  const w = g.measureText(text).width + size * 1.1, h = size * 1.55;
   g.shadowColor = "rgba(0,0,0,0.5)"; g.shadowBlur = 18; g.shadowOffsetY = 8;
-  rr(0, -34, w, 62, 14); fill(bg);
+  rr(0, -h * 0.55, w, h, 16); fill(bg);
   g.shadowColor = "transparent";
-  g.fillStyle = fg; g.textBaseline = "alphabetic"; g.fillText(text, 22, 11);
+  g.fillStyle = fg; g.textBaseline = "alphabetic"; g.fillText(text, size * 0.55, size * 0.28);
   g.restore();
 }
 
-// Chunky red arrow with a white keyline so it pops on any background.
-function arrow(cx, cy, len, thick, rot) {
-  g.save(); g.translate(cx, cy); g.rotate(rot);
-  const h = len / 2, t = thick / 2, head = thick * 1.55, neck = len * 0.08;
-  g.beginPath();
-  g.moveTo(-h, -t); g.lineTo(h - head - neck, -t); g.lineTo(h - head - neck, -head);
-  g.lineTo(h, 0); g.lineTo(h - head - neck, head); g.lineTo(h - head - neck, t); g.lineTo(-h, t); g.closePath();
-  g.shadowColor = "rgba(0,0,0,0.55)"; g.shadowBlur = 30; g.shadowOffsetY = 14;
-  g.lineJoin = "round"; g.lineWidth = 18; g.strokeStyle = "#fff"; g.stroke();
+// Thin curved red arrow with a white keyline so it pops on any background.
+function arrow([x0, y0], [x1, y1], [x2, y2], [x3, y3]) {
+  const ang = Math.atan2(y3 - y2, x3 - x2), head = 34;
+  const bx = x3 - Math.cos(ang) * head * 0.6, by = y3 - Math.sin(ang) * head * 0.6; // shaft stops inside the head
+  const shaft = () => { g.beginPath(); g.moveTo(x0, y0); g.bezierCurveTo(x1, y1, x2, y2, bx, by); };
+  const tip = () => {
+    g.beginPath();
+    g.moveTo(x3, y3);
+    g.lineTo(x3 - Math.cos(ang - 0.5) * head, y3 - Math.sin(ang - 0.5) * head);
+    g.lineTo(x3 - Math.cos(ang + 0.5) * head, y3 - Math.sin(ang + 0.5) * head);
+    g.closePath();
+  };
+  g.save(); g.lineCap = "round"; g.lineJoin = "round";
+  g.shadowColor = "rgba(0,0,0,0.55)"; g.shadowBlur = 24; g.shadowOffsetY = 10;
+  g.strokeStyle = "#fff"; g.fillStyle = "#fff"; g.lineWidth = 22;
+  shaft(); g.stroke(); tip(); g.fill(); g.stroke();
   g.shadowColor = "transparent";
-  const gr = g.createLinearGradient(-h, 0, h, 0);
-  gr.addColorStop(0, "#ff4d4d"); gr.addColorStop(1, "#e5173f");
-  g.fillStyle = gr; g.fill();
+  g.strokeStyle = "#ef2b45"; g.fillStyle = "#ef2b45"; g.lineWidth = 10;
+  shaft(); g.stroke(); tip(); g.fill(); g.stroke();
   g.restore();
 }
 
@@ -129,12 +137,18 @@ function title() {
 
 function draw() {
   background();
-  const S = 1.14, ww = 380, wh = 340;
-  site({ x: 100, y: 172, w: ww, h: wh, scale: S, rot: -0.03, p: THEMES.light, shadow: 0.35 });
-  site({ x: 1600 - 100 - ww * S, y: 172, w: ww, h: wh, scale: S, rot: 0.03, p: THEMES.catppuccin });
-  arrow(800, 350, 300, 78, -0.06);
-  sticker("BEFORE", 64, 172, -0.06, "#ffffff", "#c5221f");
-  sticker("AFTER", 1600 - 64 - 190, 172, 0.06, "#a6e3a1", "#11111b");
+  const ww = 380, wh = 340;
+  site({ x: 90, y: 178, w: ww, h: wh, scale: 1.14, rot: -0.03, p: THEMES.light, shadow: 0.35 });
+
+  // The "after" side: one page, many themes (a light one in the mix so they read as different).
+  const S = 0.8;
+  [[THEMES.gruvbox, 900, 270, -0.05], [THEMES.latte, 1005, 245, 0.035],
+   [THEMES.everforest, 1110, 275, -0.025], [THEMES.catppuccin, 1215, 245, 0.045]]
+    .forEach(([p, x, y, rot]) => site({ x, y, w: ww, h: wh, scale: S, rot, p }));
+
+  arrow([548, 520], [610, 290], [790, 250], [905, 392]);
+  sticker("BEFORE", 64, 178, -0.06, "#ffffff", "#c5221f");
+  sticker("Matches your theme!", 936, 196, 0.03, "#a6e3a1", "#11111b", 50);
   title();
 }
 document.fonts.ready.then(draw);
